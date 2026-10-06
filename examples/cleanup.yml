@@ -1,0 +1,63 @@
+# Copy this into the consuming repository's .github/workflows/cleanup.yml.
+# Replace @main with a released version or, preferably, a full commit SHA.
+name: Repository Cleanup
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview without changing GitHub resources'
+        type: boolean
+        default: true
+      pr_stale_days:
+        description: 'PR creation age before warning'
+        type: number
+        required: true
+        default: 7
+      pr_warning_days:
+        description: 'Warning period before closure'
+        type: number
+        required: true
+        default: 7
+      branch_inactive_days:
+        description: 'Orphan/new-work branch inactivity threshold'
+        type: number
+        required: true
+        default: 30
+      branch_grace_days:
+        description: 'Closed-PR/recent-activity branch grace period'
+        type: number
+        required: true
+        default: 7
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: repository-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # No checkout or dependency installation required.
+      - uses: byteartis/action-stale-cleanup@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || github.event_name != 'workflow_dispatch' && vars.CLEANUP_ENABLED != 'true' }}
+          pr-stale-days: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.pr_stale_days) || vars.PR_STALE_DAYS || '7' }}
+          pr-warning-days: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.pr_warning_days) || vars.PR_WARNING_DAYS || '7' }}
+          branch-inactive-days: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.branch_inactive_days) || vars.BRANCH_INACTIVE_DAYS || '30' }}
+          branch-grace-days: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.branch_grace_days) || vars.BRANCH_GRACE_DAYS || '7' }}
+          excluded-branches: |
+            team/*
+            gov-dev
+            staging
+            staging-*
+            staging/*
+            release/*

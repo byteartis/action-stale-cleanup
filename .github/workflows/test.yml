@@ -1,0 +1,44 @@
+name: Test Action
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm test
+      - name: Verify committed action bundle
+        run: |
+          cp -R dist "$RUNNER_TEMP/stale-cleanup-dist"
+          npm run build
+          diff -r "$RUNNER_TEMP/stale-cleanup-dist" dist
+      - name: Smoke-test bundled action without GitHub mutations
+        shell: bash
+        env:
+          INPUT_PR-STALE-DAYS: 'invalid'
+          INPUT_DRY-RUN: 'true'
+          INPUT_EXEMPT-DRAFTS: 'true'
+        run: |
+          set +e
+          node dist/index.js > "$RUNNER_TEMP/stale-cleanup-smoke.log" 2>&1
+          status=$?
+          set -e
+          test "$status" -eq 1
+          grep -q 'prStaleDays must be a positive integer' "$RUNNER_TEMP/stale-cleanup-smoke.log"

@@ -1,0 +1,27 @@
+{
+  "name": "action-stale-cleanup",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GitHub Action for safe stale PR and branch cleanup",
+  "license": "MIT",
+  "repository": "github:byteartis/action-stale-cleanup",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test src/*.test.cjs",
+    "test:upstream": "node scripts/check-upstream.cjs",
+    "build": "ncc build src/main.js -o dist --license licenses.txt",
+    "format": "prettier --write action.yml package.json 'src/**/*.{js,cjs}' 'scripts/**/*.cjs' '.github/workflows/*.yml' 'examples/*.yml' README.md OPEN_POINTS.md PR_ALIGNMENT_PLAN.md 'docs/**/*.md'",
+    "format:check": "prettier --check action.yml package.json 'src/**/*.{js,cjs}' 'scripts/**/*.cjs' '.github/workflows/*.yml' 'examples/*.yml' README.md OPEN_POINTS.md PR_ALIGNMENT_PLAN.md 'docs/**/*.md'"
+  },
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.45.0",
+    "prettier": "^3.6.2"
+  }
+}
