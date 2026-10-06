@@ -2,9 +2,9 @@
 
 ## Scope
 
-User request: implement `PR_ALIGNMENT_PLAN.md`, retain activity-independent PR closure, ask Opus 5.5 High to review against the plan, and iterate development/review until complete. This authorizes local work, not publishing or live GitHub mutations.
+Original review request: implement `PR_ALIGNMENT_PLAN.md`, retain activity-independent PR closure, ask Opus 5.5 High to review against the plan, and iterate development/review until complete. That review scope authorized local work, not publication or live GitHub mutations. The historical review record below is preserved; subsequent implementation publication and explicitly requested read-only validation are recorded separately.
 
-Chosen architecture: B (small processor with pure policy); see `PR_ALIGNMENT_DECISION.md` and `PR_POLICY_CONTRACT.md`. All work is local/uncommitted on the original `main`; `a4eb597` is only the initial repository commit, not a validation commit. The pre-alignment working-tree snapshot is `/tmp/stale-cleanup-baseline.arkmAx` for this session's review comparison.
+Chosen architecture: B (small processor with pure policy); see `PR_ALIGNMENT_DECISION.md` and `PR_POLICY_CONTRACT.md`. During the review rounds, the implementation was uncommitted on the original `main`, based on initial commit `a4eb597`. The session-local pre-alignment snapshot was `/tmp/stale-cleanup-baseline.arkmAx`. The implementation has since been committed and merged as `719c78d193ce6ac91f2ee2f5bd63ad62e8c86d3b`; see the publication checkpoint below.
 
 ## Local validation before review round 1
 
@@ -68,6 +68,25 @@ The reviewer suggested two optional improvements: describe retry eligibility as 
 - Real-upstream comparisons: **33 pass** against the pinned release, verified independently in round 3. Formatting, bundle reproducibility/smoke, workflow lint and audit also pass.
 - No actionable review objections remain. The local implementation/review loop is complete.
 
-## Separate publication/rollout gates
+## Implementation publication and hosted CI — 2026-10-06
 
-Hosted CI, real consumer preview, release/tag policy, publication approval, and enabling mutations remain pending in `OPEN_POINTS.md`. No live/disposable GitHub lifecycle writes were performed. No validation commit exists yet; attach the published commit and hosted evidence only after publication approval.
+- [PR #1](https://github.com/byteartis/action-stale-cleanup/pull/1) merged at `2026-10-06T17:15:13Z` as [`719c78d193ce6ac91f2ee2f5bd63ad62e8c86d3b`](https://github.com/byteartis/action-stale-cleanup/commit/719c78d193ce6ac91f2ee2f5bd63ad62e8c86d3b). Remote `main` points at this commit.
+- [Test Action run 37502108844](https://github.com/byteartis/action-stale-cleanup/actions/runs/37502108844) completed successfully on that exact commit. All validation steps passed: `npm ci`, formatting, unit tests, rebuilding and comparing the committed bundle, and the invalid-input bundled smoke test.
+- The implementation branch commit used for the local live previews was `265320ea033b2bdcff90a5c8be76763f295b6140`. Its `src/`, `dist/`, and `action.yml` are identical to those in the merged commit, as verified with `git diff`.
+- Local release-readiness checks also reconfirmed 244 passing unit tests, formatting, bundle equivalence, and zero production dependency audit findings. These local checks are distinct from the earlier 33 upstream comparisons; those comparisons were not rerun for this documentation update.
+
+## Live read-only validation — 2026-10-06
+
+The user authorized local dry-run checks against the action repository and `SWORDHealth/service-chat`, using the `GITHUB_TOKEN` available in the login-shell environment. Both checks ran the committed `dist/index.js` with `dry-run: true`, first with documented defaults (`7/7/30/7` days for PR stale/warning and branch inactivity/grace), then with all four thresholds set to one day. No custom branch exclusions were configured, and draft exemptions remained enabled.
+
+- **Action repository:** both scenarios exited successfully, each making 6 GET requests with HTTP 200 responses. No open PRs existed and the merged branch was still within the grace period, so no cleanup candidates were logged. Supplemental PR event/comment and repository activity reads also returned HTTP 200.
+- **`service-chat`:** the repository had 30 branches and 6 open PRs. Defaults produced 3 PR warning candidates, no eligible closures, and 17 branch deletion candidates across 161 successful GET requests. One-day thresholds produced 3 warning candidates, no eligible closures, and 23 branch deletion candidates across 186 successful GET requests. Neither action run emitted warnings or errors. Supplemental event/comment/activity reads succeeded after retrying a connection failure in the validation harness.
+- **Mutation safeguards:** a diagnostic-channel guard was configured to stop the action process before any non-read HTTP request. It observed only GET requests; no blocking was needed. Before/after snapshots matched: all branch names/SHAs/protection flags and open-PR state/labels/head SHAs were checked, along with closed PR history in the action repository and five sampled closed PRs in `service-chat`. This is a sampled state comparison, not an exhaustive audit of every repository resource. No GitHub cleanup mutations, project-file changes, or commits were made during these runs.
+- **Rollout warning:** without custom exclusions, `team/mobile` qualified for deletion under defaults and all six `team/*` branches qualified under one-day thresholds. Candidate eligibility is not approval to delete these branches. Configure repository-specific exclusions and protections before enabling mutations.
+- **Evidence retention:** sanitized logs, read-only request audits, and snapshot results were written outside the checkout to `/tmp/stale-cleanup-live-check.g7IM0S/` and `/tmp/stale-cleanup-service-chat.D74xxD/`. These session-local artifacts are temporary, not committed or hosted evidence; this document records their verified results.
+
+These checks validate real API reads, candidate selection, and preview behavior. They did not run in a consuming Actions workflow, verify that the environment token was workflow-issued, establish write permissions, or test bot-authored warning/label delivery, PR closure, or branch deletion. No closure candidate was available, so live closure preview was not exercised. Any live-write validation requires separate explicit authorization.
+
+## Remaining release/rollout gates
+
+Implementation publication, hosted CI, local real-GitHub dry runs, and release-facing example updates are complete. The examples use `@v1` with full-SHA pinning guidance, but still require publication of the release tag. The release notes are stored in the [unpublished v1.0.0 GitHub draft release](https://github.com/byteartis/action-stale-cleanup/releases/tag/untagged-9c2abf883856dac5fa45), visible to users with repository access. Release/tag publication, consuming-workflow authentication validation, repository-specific rollout configuration, and enabling mutations remain separate pending work in `OPEN_POINTS.md`. No live GitHub cleanup lifecycle writes have been performed or authorized by these dry-run requests.
