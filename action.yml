@@ -1,0 +1,43 @@
+name: Stale Cleanup
+description: Safely warn and close old pull requests and delete unused branches
+author: Byte Artis
+branding:
+  icon: trash-2
+  color: orange
+
+inputs:
+  github-token:
+    description: 'The consuming repository GITHUB_TOKEN (contents and pull-requests write)'
+    required: true
+    default: ${{ github.token }}
+  dry-run:
+    description: 'Preview changes without mutating any GitHub resources'
+    default: 'true'
+  pr-stale-days:
+    description: 'PR creation age in days before warning (not inactivity)'
+    default: '7'
+  pr-warning-days:
+    description: 'Days after a delivered warning and stale label before closure'
+    default: '7'
+  branch-inactive-days:
+    description: 'Days without commits or recorded ref activity before deleting orphan/new-work branches'
+    default: '30'
+  branch-grace-days:
+    description: 'Grace days after PR closure or recorded ref activity for unchanged closed heads'
+    default: '7'
+  stale-label:
+    description: 'Label used to flag a PR for automatic closure'
+    default: stale
+  exempt-label:
+    description: 'Label preserving a PR and its branch (including closed PR history)'
+    default: keep-open
+  exempt-drafts:
+    description: 'Skip draft PRs'
+    default: 'true'
+  excluded-branches:
+    description: 'Newline-separated branch patterns; only * is a wildcard. Default branch is always excluded.'
+    default: ''
+
+runs:
+  using: node24
+  main: dist/index.js
