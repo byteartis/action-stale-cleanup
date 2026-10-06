@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: byteartis/action-stale-cleanup@main
+      - uses: byteartis/action-stale-cleanup@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           dry-run: 'true'
@@ -40,7 +40,7 @@ jobs:
             staging
 ```
 
-`@main` is usable after this implementation is pushed. No version tag is assumed to exist yet. For production, pin a released version or preferably a full commit SHA. The action's `node24` runtime requires a sufficiently recent Actions runner; GitHub-hosted runners provide it.
+`@v1` tracks compatible v1 releases; the examples require a published `v1` tag. For production, prefer pinning the full commit SHA of a reviewed release. The action's `node24` runtime requires a sufficiently recent Actions runner; GitHub-hosted runners provide it.
 
 For manual **job parameters** with number inputs, repository-variable fallbacks for scheduled runs, and preview-only scheduling until `CLEANUP_ENABLED=true`, copy [examples/cleanup.yml](examples/cleanup.yml). Schedules belong to the consuming workflow, not the action. GitHub may disable scheduled workflows in public repositories after 60 days without repository activity; re-enable them when needed.
 
@@ -86,26 +86,15 @@ The default branch is **always excluded**. No organization-specific branch names
 
 The action paginates and isolates per-item errors. It attempts independently guarded branch cleanup even if the PR phase fails, but the action remains failed if any non-benign error occurs. Protection/ruleset denial is reported, not bypassed; disappeared resources are warnings.
 
-## Relationship to `actions/stale`
+### Warning evidence and configuration changes
 
-[`actions/stale`](https://github.com/actions/stale) already supplies ordinary PR warning, labeling, and closure. Prefer it when activity-based closure meets your needs. This action deliberately keeps a small fixed-deadline PR processor and separate guarded branch cleanup rather than maintaining a broad upstream fork. See the [alignment decision and behavior matrix](docs/PR_ALIGNMENT_DECISION.md) and [deadline contract](docs/PR_POLICY_CONTRACT.md).
-
-| This action                   | Upstream equivalent or difference                                                                      |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `pr-stale-days`               | `days-before-pr-stale` with `ignore-pr-updates: true` for creation-age eligibility                     |
-| `pr-warning-days`             | Similar to `days-before-pr-close`, but our deadline is independent of later activity                   |
-| `stale-label`, `exempt-label` | `stale-pr-label`, `exempt-pr-labels`                                                                   |
-| `exempt-drafts`, `dry-run`    | `exempt-draft-pr`, `debug-only`                                                                        |
-| PR-only processing            | Upstream issue stale/close thresholds can both be set to `-1`                                          |
-| Guarded branch cleanup        | Not equivalent to upstream `delete-branch`; includes orphan/historical PR branches and safety rechecks |
-
-In the compared upstream v11.0.0 implementation, `ignore-pr-updates` changes warning eligibility; disabling stale-label removal on updates does **not** make closure activity-independent. Our closure requires a trusted delivered warning plus a label event, using the later timestamp and the current configured warning period. Closure becomes eligible at the deadline and happens on the next successful run. Lowering configured thresholds can advance pending deadlines.
+Closure requires a trusted delivered warning plus a label event, using the later timestamp and the current configured warning period. Closure becomes eligible at the deadline and happens on the next successful run. Lowering configured thresholds can advance pending deadlines. See the [deadline contract](docs/PR_POLICY_CONTRACT.md) for detailed rules.
 
 Same-second reset/warning ordering is treated conservatively as a reset. Removing the stale label also resets the warning requirement, even if it is manually reapplied before the next run. A successfully delivered warning can retry a missing label without another comment only while that warning is still within its current warning period and no reset or recorded application at/after it exists; the newly applied label still gets a full warning period. Otherwise, a disappeared label gets a fresh warning. Malformed relevant dates are skipped with a warning; valid creation/evidence dates after the run began are deferred at info level, since normal mid-run changes are not corrupt evidence. Neither case authorizes mutations.
 
 Before renaming `stale-label` or `exempt-label`, run preview and review pending PRs: old comment instructions do not automatically change. An expired warning gets a fresh notice, but an unexpired warning may quietly acquire the new stale label; removing the old stale label then no longer resets its deadline. To force new instructions for all pending PRs, remove their prior marked bot warning comments before using the new configuration. Removing old labels alone does not guarantee a fresh notice, and this action does not automatically remove those old labels.
 
-Migration from upstream labels/comments does not adopt them as trusted warning evidence: expect a fresh full warning period. Deleting a warning or removing its marker invalidates that comment; edits retaining the trusted marker keep the creation-time clock. Do not run two cleanup actions against the same stale label at the same time.
+Existing labels and comments from other automation are not adopted as trusted warning evidence: expect a fresh full warning period. Deleting a warning or removing its marker invalidates that comment; edits retaining the trusted marker keep the creation-time clock. Do not run two cleanup actions against the same stale label at the same time.
 
 ## Safe rollout
 
@@ -125,7 +114,7 @@ npm run format:check
 npm run build
 ```
 
-Tests use mocks, not live GitHub writes. `npm run test:upstream` optionally downloads the pinned `actions/stale` v11.0.0 source and its build dependencies into a temporary directory, then compares real upstream processing with this action using mocked GitHub scenarios. It requires network access; it is not part of the offline unit-test suite or routine CI. No downloaded code is included in the production bundle.
+Tests use mocks, not live GitHub writes.
 
 CI rebuilds and compares the committed `dist/` bundle, checks formatting, runs tests, and exercises the bundled entrypoint with invalid input without contacting GitHub. `dist/index.js` and its dependency license file must be committed: consumers run the bundle directly.
 

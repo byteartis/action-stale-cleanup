@@ -89,4 +89,4 @@ These checks validate real API reads, candidate selection, and preview behavior.
 
 ## Remaining release/rollout gates
 
-Implementation publication, hosted CI, and local real-GitHub dry runs are complete. Initial release notes/tags, release-facing example updates, consuming-workflow authentication validation, repository-specific rollout configuration, and enabling mutations remain separate pending work in `OPEN_POINTS.md`. No live GitHub cleanup lifecycle writes have been performed or authorized by these dry-run requests.
+Implementation publication, hosted CI, local real-GitHub dry runs, and release-facing example updates are complete. The examples use `@v1` with full-SHA pinning guidance, but still require publication of the release tag. Initial release notes/tags, consuming-workflow authentication validation, repository-specific rollout configuration, and enabling mutations remain separate pending work in `OPEN_POINTS.md`. No live GitHub cleanup lifecycle writes have been performed or authorized by these dry-run requests.

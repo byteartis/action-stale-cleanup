@@ -1,5 +1,6 @@
 # Copy this into the consuming repository's .github/workflows/cleanup.yml.
-# Replace @main with a released version or, preferably, a full commit SHA.
+# @v1 requires a published v1 tag and tracks compatible v1 releases.
+# For production, prefer the full commit SHA of a reviewed release.
 name: Repository Cleanup
 
 on:
@@ -46,7 +47,7 @@ jobs:
     timeout-minutes: 15
     steps:
       # No checkout or dependency installation required.
-      - uses: byteartis/action-stale-cleanup@main
+      - uses: byteartis/action-stale-cleanup@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || github.event_name != 'workflow_dispatch' && vars.CLEANUP_ENABLED != 'true' }}
