@@ -29,7 +29,6 @@ jobs:
     steps:
       - uses: byteartis/action-stale-cleanup@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           dry-run: 'true'
           pr-stale-days: '7'
           pr-warning-days: '7'
@@ -39,6 +38,8 @@ jobs:
             release/*
             staging
 ```
+
+The action automatically uses `${{ github.token }}`; you do not need to pass `github-token` explicitly. The workflow permissions above are still required.
 
 `@v1` tracks compatible v1 releases; the examples require a published `v1` tag. For production, prefer pinning the full commit SHA of a reviewed release. The action's `node24` runtime requires a sufficiently recent Actions runner; GitHub-hosted runners provide it.
 
